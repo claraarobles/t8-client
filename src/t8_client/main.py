@@ -49,6 +49,41 @@ def list_waves(machine, point, pmode):
         print(f"Error al comunicarse con la API: {e}")
 
 
+def list_spectra(machine, point, pmode):
+    """ Lista los espectros disponibles y muestra los valores de 'snap'. """
+    url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/"f"?array_fmt={FORMAT}"
+    print(f"Solicitando datos desde: {url}")  # Para depuración
+
+    try:
+        response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        
+        if "_items" not in data:
+            print("No se encontraron espectros en la respuesta.")
+            return
+
+        timestamps = []
+
+        for item in data["_items"]:
+            if "_links" in item and "self" in item["_links"]:
+                url_self = item["_links"]["self"]
+                timestamp = int(url_self.split("/")[-1])  # Extraer número final de la URL
+                
+                if timestamp != 0:
+                    formatted_time = datetime.fromtimestamp(timestamp, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
+                    timestamps.append(formatted_time)
+
+        if timestamps:
+            print("\n".join(timestamps))  # Mostrar todos los timestamps en líneas separadas
+        else:
+            print("No se encontraron timestamps válidos.")
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Error al comunicarse con la API: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
 
@@ -62,6 +97,12 @@ def main():
     waves_parser.add_argument("--pmode", required=True, help="Modo de procesamiento")
     waves_parser.set_defaults(func=list_waves)
 
+    # Subcomando list-spectra
+    spectra_parser = subparsers.add_parser("list-spectra", help="Lista los espectros")
+    spectra_parser.add_argument("--machine", required=True, help="Identificador de la máquina")
+    spectra_parser.add_argument("--point", required=True, help="Punto de medición")
+    spectra_parser.add_argument("--pmode", required=True, help="Modo de procesamiento")
+    spectra_parser.set_defaults(func=list_spectra)
 
     # Parsear argumentos
     args = parser.parse_args()
