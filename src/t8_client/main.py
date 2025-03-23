@@ -1,53 +1,52 @@
 import os
 import argparse
 import requests
+import json
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import UTC, datetime
 
-# Cargar las variables de entorno desde el archivo .env
+# Cargar variables de entorno
 load_dotenv()
 
-# Formato de decodificación de los datos
-FORMAT = 'zint'
-
+# Definir variables de conexión
 HOST = os.getenv('T8_HOST')
 USER = os.getenv('T8_USER')
 PASSWORD = os.getenv('T8_PASSWORD')
-
-print(f"T8_USER: {USER}")
-print(f"T8_PASSWORD: {PASSWORD}")
+FORMAT = 'zint'
 
 def list_waves(machine, point, pmode):
-    print(f"Listando formas de onda para MACHINE={machine}, POINT={point}, PMODE={pmode}")
-
-    url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
-    print(f"Solicitando formas de onda desde: {url}")
+    """ Lista las formas de onda disponibles y muestra los valores de 'snap'. """
+    url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/"f"?array_fmt={FORMAT}"
+    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
-        response.raise_for_status()  # Lanza una excepción si el código de estado no es 200
+        response.raise_for_status()
 
-        # Depuración: imprime el código de estado y la respuesta completa
-        print(f"Código de estado: {response.status_code}")
         data = response.json()
-        print("Respuesta completa de la API:", data)
-
-        # Procesar las entradas con "waves"
-        waves = data.get("waves", [])
-        if not waves:
-            print("No se encontraron formas de onda.")
+        
+        if "_items" not in data:
+            print("No se encontraron formas de onda en la respuesta.")
             return
 
-        print("Lista de snap_t disponibles:")
-        for wave in waves:
-            snap_t = wave.get('snap_t')  # Accede al campo 'snap_t' de cada entrada
-            if snap_t:
-                # Si snap_t es un timestamp, conviértelo a un formato legible
-                snap_t_date = datetime.utcfromtimestamp(snap_t).strftime('%Y-%m-%dT%H:%M:%S')
-                print(snap_t_date)
+        timestamps = []
 
+        for item in data["_items"]:
+            if "_links" in item and "self" in item["_links"]:
+                url_self = item["_links"]["self"]
+                timestamp = int(url_self.split("/")[-1])  # Extraer número final de la URL
+                
+                if timestamp != 0:
+                    formatted_time = datetime.fromtimestamp(timestamp, tz=UTC).strftime("%Y-%m-%dT%H:%M:%S")
+                    timestamps.append(formatted_time)
+
+        if timestamps:
+            print("\n".join(timestamps))  # Mostrar todos los timestamps en líneas separadas
+        else:
+            print("No se encontraron timestamps válidos.")
+            
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la URL: {e}")
+        print(f"Error al comunicarse con la API: {e}")
 
 
 def main():
@@ -63,9 +62,9 @@ def main():
     waves_parser.add_argument("--pmode", required=True, help="Modo de procesamiento")
     waves_parser.set_defaults(func=list_waves)
 
+
     # Parsear argumentos
     args = parser.parse_args()
-
     if args.command:
         args.func(args.machine, args.point, args.pmode)
     else:
