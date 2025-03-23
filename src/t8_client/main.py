@@ -109,6 +109,31 @@ def get_wave(machine, point, pmode, date):
         print(f"Error al comunicarse con la API: {e}")
 
 
+def get_spectrum(machine, point, pmode, date):
+    """ Obtiene un espectro específico dado un timestamp. """
+    try:
+        # Convertir la fecha UTC en formato ISO 8601 a timestamp
+        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
+        date = str(int(date.timestamp()))
+
+    except ValueError as e:
+        print(f"Error al convertir la fecha: {e}")
+        return
+
+    url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
+    print(f"Solicitando datos desde: {url}")  # Para depuración
+
+    try:
+        response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        print(json.dumps(data, indent=4))  # Mostrar el espectro en formato JSON
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error al comunicarse con la API: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
 
@@ -129,18 +154,20 @@ def main():
     spectra_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
     spectra_parser.set_defaults(func=list_spectra)
 
-    # Subcomando get-wave
-    wave_parser = subparsers.add_parser("get-wave", help="Obtiene una forma de onda específica")
-    wave_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    wave_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    wave_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    wave_parser.add_argument("--datetime","-t", required=True, help="Fecha de la forma de onda (timestamp)")
-    wave_parser.set_defaults(func=get_wave)
+    # Subcomando get-spectrum
+    spectrum_parser = subparsers.add_parser("get-spectrum", help="Obtiene un espectro específico")
+    spectrum_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
+    spectrum_parser.add_argument("--point","-p", required=True, help="Punto de medición")
+    spectrum_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
+    spectrum_parser.add_argument("--datetime","-t", required=True, help="Fecha del espectro (timestamp)")
+    spectrum_parser.set_defaults(func=get_spectrum)
 
     # Parsear argumentos
     args = parser.parse_args()
     if args.command:
         if args.command == "get-wave":
+            args.func(args.machine, args.point, args.pmode, args.datetime)
+        elif args.command == "get-spectrum":
             args.func(args.machine, args.point, args.pmode, args.datetime)
         else:
             args.func(args.machine, args.point, args.pmode)
