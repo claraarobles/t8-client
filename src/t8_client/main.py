@@ -12,7 +12,7 @@ from t8_client.functions.subcommands import (
 
 
 def main():
-    
+
     parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
 
     # Subcomandos
@@ -33,7 +33,7 @@ def main():
     spectra_parser.set_defaults(func=list_spectra)
 
     # Subcomando get-wave
-    wave_parser = subparsers.add_parser("get-spectrum", help="Obtiene un espectro específico")
+    wave_parser = subparsers.add_parser("get-wave", help="Obtiene un espectro específico")
     wave_parser.add_argument("--machine", "-M", required=True, help="Identificador de la máquina")
     wave_parser.add_argument("--point", "-p", required=True, help="Punto de medición")
     wave_parser.add_argument("--pmode", "-m", required=True, help="Modo de procesamiento")

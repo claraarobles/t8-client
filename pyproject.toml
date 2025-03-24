@@ -20,10 +20,10 @@ pytest = ">=8.3.5,<9.0.0"
 ruff = "^0.11.2"
 
 [tool.poetry]
-packages = [{include = "t8-client", from = "src"}]
+packages = [{include = "t8_client", from = "src"}]
 
 [tool.poetry.scripts]
-t8_client = "t8-client.main:main"
+t8-client = "t8_client.main:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

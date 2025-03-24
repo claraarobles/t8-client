@@ -1,4 +1,4 @@
-import json
+
 import os
 from base64 import b64decode
 from datetime import UTC, datetime
@@ -9,6 +9,7 @@ import numpy as np
 import requests
 from dotenv import load_dotenv
 from matplotlib import pylab
+
 from t8_client.functions.save_to_csv import save_to_csv
 from t8_client.functions.timestamp import utc_to_timestamp
 

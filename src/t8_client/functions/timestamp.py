@@ -1,5 +1,5 @@
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timezone
 
 
 def utc_to_timestamp(utc_date: str) -> int:
@@ -15,7 +15,8 @@ def utc_to_timestamp(utc_date: str) -> int:
     try:
         # Parsear la fecha UTC
         dt = datetime.strptime(utc_date, "%Y-%m-%dT%H:%M:%S")
-        return int(dt.replace(tzinfo=UTC.utc).timestamp())
+        return int(dt.replace(tzinfo=timezone.utc).timestamp())
+
 
     except ValueError as e:
         raise ValueError(
