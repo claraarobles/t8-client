@@ -1,5 +1,5 @@
 
-from datetime import UTC, datetime, timezone
+from datetime import datetime, timezone
 
 
 def utc_to_timestamp(utc_date: str) -> int:

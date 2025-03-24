@@ -11,20 +11,26 @@ from t8_client.functions.subcommands import (
 )
 
 
-def add_subcommand(subparsers, name, help_text, func, include_datetime=False):
+def add_subcommand(subparsers, name, help_text, func, include_datetime=False) -> None:
     """Añade un subcomando al parser."""
     parser = subparsers.add_parser(name, help=help_text)
-    parser.add_argument("--machine", "-M", required=True, help="Identificador de la máquina")
+    parser.add_argument(
+        "--machine", "-M", required=True, help="Identificador de la máquina"
+    )
     parser.add_argument("--point", "-p", required=True, help="Punto de medición")
     parser.add_argument("--pmode", "-m", required=True, help="Modo de procesamiento")
 
     if include_datetime:
-        parser.add_argument("--datetime", "-t", required=True, help="Fecha del espectro (timestamp)")
+        parser.add_argument(
+            "--datetime", "-t", required=True, help="Fecha del espectro (timestamp)"
+        )
 
     parser.set_defaults(func=func)
 
-def main():
-    parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Cliente T8 para gestionar datos de espectro y ondas"
+    )
     subparsers = parser.add_subparsers(dest="command", help="Subcomandos disponibles")
 
     # Lista de subcomandos con sus funciones asociadas
