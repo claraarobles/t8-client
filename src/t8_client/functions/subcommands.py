@@ -13,18 +13,17 @@ from matplotlib import pylab
 from t8_client.functions.save_to_csv import save_to_csv
 from t8_client.functions.timestamp import utc_to_timestamp
 
-# Cargar variables de entorno
+# Load environment variables
 load_dotenv()
 
-# Definir variables de conexión
+# Define connection variables
 HOST = os.getenv("T8_HOST")
 USER = os.getenv("T8_USER")
 PASSWORD = os.getenv("T8_PASSWORD")
 FORMAT = "zint"
 
-
-# Función para decodificar datos comprimidos en formato zint
-def zint_to_float(raw_):
+# Function to decode compressed data in zint format
+def zint_to_float(raw_: str) -> np.ndarray:
     """
     Decodes compressed data in zint format to a float array.
 
@@ -34,31 +33,40 @@ def zint_to_float(raw_):
     Returns:
         np.array: The decompressed data as a float array.
     """
+    # Decode base64 and decompress the data
     d = decompress(b64decode(raw_.encode()))
+    # Convert the decompressed data into a float array
     return np.array(
         [unpack("h", d[i * 2 : (i + 1) * 2])[0] for i in range(int(len(d) / 2))],
         dtype="f",
     )
 
-
-# Diccionario para seleccionar la función de decodificación adecuada
+# Dictionary to select the appropriate decoding function
 decode_format = {
     "zint": zint_to_float,
 }
 
+# Function to list available waveforms and display their timestamps
+def list_waves(machine: str, point: str, pmode: str) -> None:
+    """
+    Lists available waveforms and displays their timestamps.
 
-def list_waves(machine, point, pmode) -> None:
-    """Lista las formas de onda disponibles y muestra los valores de 'snap'."""
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+    """
     url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
         if "_items" not in data:
-            print("No se encontraron formas de onda en la respuesta.")
+            print("No waveforms found in the response.")
             return
 
         timestamps = []
@@ -66,39 +74,46 @@ def list_waves(machine, point, pmode) -> None:
         for item in data["_items"]:
             if "_links" in item and "self" in item["_links"]:
                 url_self = item["_links"]["self"]
-                timestamp = int(
-                    url_self.split("/")[-1]
-                )
+                # Extract the timestamp from the URL
+                timestamp = int(url_self.split("/")[-1])
 
                 if timestamp != 0:
+                    # Format the timestamp into a readable string
                     formatted_time = datetime.fromtimestamp(timestamp, tz=UTC).strftime(
                         "%Y-%m-%dT%H:%M:%S"
                     )
                     timestamps.append(formatted_time)
 
         if timestamps:
-            print(
-                "\n".join(timestamps)
-            )  # Mostrar todos los timestamps en líneas separadas
+            # Display all timestamps in separate lines
+            print("\n".join(timestamps))
         else:
-            print("No se encontraron timestamps válidos.")
+            print("No valid timestamps found.")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
 
+# Function to list available spectra and display their timestamps
+def list_spectra(machine: str, point: str, pmode: str) -> None:
+    """
+    Lists available spectra and displays their timestamps.
 
-def list_spectra(machine, point, pmode) -> None:
-    """Lista los espectros disponibles y muestra los valores de 'snap'."""
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+    """
     url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
         if "_items" not in data:
-            print("No se encontraron espectros en la respuesta.")
+            print("No spectra found in the response.")
             return
 
         timestamps = []
@@ -106,30 +121,37 @@ def list_spectra(machine, point, pmode) -> None:
         for item in data["_items"]:
             if "_links" in item and "self" in item["_links"]:
                 url_self = item["_links"]["self"]
-                timestamp = int(
-                    url_self.split("/")[-1]
-                )  # Extraer número final de la URL
+                # Extract the timestamp from the URL
+                timestamp = int(url_self.split("/")[-1])
 
                 if timestamp != 0:
+                    # Format the timestamp into a readable string
                     formatted_time = datetime.fromtimestamp(timestamp, tz=UTC).strftime(
                         "%Y-%m-%dT%H:%M:%S"
                     )
                     timestamps.append(formatted_time)
 
         if timestamps:
-            print(
-                "\n".join(timestamps)
-            )  # Mostrar todos los timestamps en líneas separadas
+            # Display all timestamps in separate lines
+            print("\n".join(timestamps))
         else:
-            print("No se encontraron timestamps válidos.")
+            print("No valid timestamps found.")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
 
+# Function to retrieve a specific waveform given a timestamp
+def get_wave(machine: str, point: str, pmode: str, date: str) -> None:
+    """
+    Retrieves a specific waveform given a timestamp.
 
-def get_wave(machine, point, pmode, date):
-    """Obtiene una forma de onda específica dado un timestamp."""
-
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+        date (str): Timestamp in UTC format.
+    """
+    # Convert the date to a timestamp
     date = utc_to_timestamp(date)
 
     url = (
@@ -137,40 +159,47 @@ def get_wave(machine, point, pmode, date):
     )
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
-        # Extraer campos del JSON
+        # Extract relevant fields from the JSON response
         srate = float(data["sample_rate"])
         factor = float(data.get("factor", 1))
         raw = data["data"]
 
-        # Decodificar los datos crudos usando el formato especificado
+        # Decode the raw data using the specified format
         wave = decode_format[FORMAT](raw)
 
-        # Aplicar el factor numérico a los datos
+        # Apply the numeric factor to the data
         wave *= factor
 
-        # Obtener el eje de tiempo
+        # Generate the time axis
         t = pylab.linspace(0, (len(wave) / srate) * 1000, len(wave))
 
-        # Nombre del archivo
+        # Generate the filename
         filename = f"{machine}_{point}_{pmode}_{date}.csv"
 
-        # Guardar en CSV 
-        save_to_csv(filename, t, wave, "Tiempo (ms)", "Amplitud")
+        # Save the data to a CSV file
+        save_to_csv(filename, t, wave, "Time (ms)", "Amplitude")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
 
+# Function to retrieve a specific spectrum given a timestamp
+def get_spectrum(machine: str, point: str, pmode: str, date: str) -> None:
+    """
+    Retrieves a specific spectrum given a timestamp.
 
-
-
-def get_spectrum(machine, point, pmode, date):
-    """Obtiene un espectro específico dado un timestamp."""
-
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+        date (str): Timestamp in UTC format.
+    """
+    # Convert the date to a timestamp
     date = utc_to_timestamp(date)
 
     url = (
@@ -179,40 +208,48 @@ def get_spectrum(machine, point, pmode, date):
     )
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
-        # Extraer campos relevantes de la respuesta JSON
+        # Extract relevant fields from the JSON response
         fmin = data.get("min_freq", 0)
         fmax = data["max_freq"]
         factor = data["factor"]
         raw = data["data"]
 
-        # Decodificar los datos en bruto usando el formato especificado
+        # Decode the raw data using the specified format
         sp = decode_format[FORMAT](raw)
 
-        # Aplicar el factor numérico a los datos
+        # Apply the numeric factor to the data
         sp *= factor
 
-        # Generar el eje de frecuencia
+        # Generate the frequency axis
         freq = pylab.linspace(fmin, fmax, len(sp))
 
-        # Nombre del archivo
+        # Generate the filename
         filename = f"{machine}_{point}_{pmode}_{date}.csv"
 
-        # Guardar en CSV
-        save_to_csv(filename, freq, sp, "Frecuencia (Hz)", "Amplitud")
+        # Save the data to a CSV file
+        save_to_csv(filename, freq, sp, "Frequency (Hz)", "Amplitude")
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
 
+# Function to plot a specific waveform given a timestamp
+def plot_wave(machine: str, point: str, pmode: str, date: str) -> None:
+    """
+    Plots a specific waveform given a timestamp.
 
-
-def plot_wave(machine, point, pmode, date):
-    """Representa una forma de onda específica dado un timestamp."""
-
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+        date (str): Timestamp in UTC format.
+    """
+    # Convert the date to a timestamp
     date = utc_to_timestamp(date)
 
     url = (
@@ -220,43 +257,52 @@ def plot_wave(machine, point, pmode, date):
     )
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
-        # Extraer campos del JSON
+        # Extract relevant fields from the JSON response
         srate = float(data["sample_rate"])
         factor = float(data.get("factor", 1))
         raw = data["data"]
 
-        # Decodificar los datos crudos usando el formato especificado
+        # Decode the raw data using the specified format
         wave = decode_format[FORMAT](raw)
 
-        # Aplicar el factor numérico a los datos
+        # Apply the numeric factor to the data
         wave *= factor
 
-        # Obtener el eje de tiempo
+        # Generate the time axis
         t = pylab.linspace(0, (len(wave) / srate) * 1000, len(wave))
 
-        # Graficar la onda
+        # Plot the waveform
         pylab.figure()
         pylab.title(
-            f"Forma de Onda - Máquina: {machine}, Punto: {point}, Modo: {pmode}"
+            f"Waveform - Machine: {machine}, Point: {point}, Mode: {pmode}"
         )
-        pylab.xlabel("Tiempo (ms)")
-        pylab.ylabel("Amplitud")
+        pylab.xlabel("Time (ms)")
+        pylab.ylabel("Amplitude")
         pylab.plot(t, wave)
         pylab.grid(True)
         pylab.show()
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
 
+# Function to plot a specific spectrum given a timestamp
+def plot_spectrum(machine: str, point: str, pmode: str, date: str) -> None:
+    """
+    Plots a specific spectrum given a timestamp.
 
-def plot_spectrum(machine, point, pmode, date):
-    """Representa una forma de espectro específica dado un timestamp."""
-
+    Args:
+        machine (str): Machine identifier.
+        point (str): Measurement point identifier.
+        pmode (str): Mode of operation.
+        date (str): Timestamp in UTC format.
+    """
+    # Convert the date to a timestamp
     date = utc_to_timestamp(date)
 
     url = (
@@ -265,36 +311,37 @@ def plot_spectrum(machine, point, pmode, date):
     )
 
     try:
+        # Send a GET request to the API
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
         response.raise_for_status()
 
         data = response.json()
 
-        # Extraer campos relevantes de la respuesta JSON
+        # Extract relevant fields from the JSON response
         fmin = data.get("min_freq", 0)
         fmax = data["max_freq"]
         factor = data["factor"]
         raw = data["data"]
 
-        # Decodificar los datos en bruto usando el formato especificado
+        # Decode the raw data using the specified format
         sp = decode_format[FORMAT](raw)
 
-        # Aplicar el factor numérico a los datos
+        # Apply the numeric factor to the data
         sp *= factor
 
-        # Generar el eje de frecuencia
+        # Generate the frequency axis
         freq = pylab.linspace(fmin, fmax, len(sp))
 
-        # Graficar el espectro
+        # Plot the spectrum
         pylab.figure()
         pylab.title(
-            f"Forma de Espectro - Máquina: {machine}, Punto: {point}, Modo: {pmode}"
+            f"Spectrum - Machine: {machine}, Point: {point}, Mode: {pmode}"
         )
-        pylab.xlabel("Frecuencia (Hz)")
-        pylab.ylabel("Amplitud")
+        pylab.xlabel("Frequency (Hz)")
+        pylab.ylabel("Amplitude")
         pylab.plot(freq, sp)
         pylab.grid(True)
         pylab.show()
 
     except requests.exceptions.RequestException as e:
-        print(f"Error al comunicarse con la API: {e}")
+        print(f"Error communicating with the API: {e}")
