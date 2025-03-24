@@ -207,6 +207,56 @@ def plot_wave(machine, point, pmode, date):
     except requests.exceptions.RequestException as e:
         print(f"Error al comunicarse con la API: {e}")
 
+
+def plot_spectrum(machine, point, pmode, date):
+    """ Representa una forma de espectro específica dado un timestamp. """
+    try:
+        # Convertir la fecha UTC en formato ISO 8601 a timestamp
+        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
+        date = str(int(date.timestamp()))
+
+    except ValueError as e:
+        print(f"Error al convertir la fecha: {e}")
+        return
+
+    url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
+    print(f"Solicitando datos desde: {url}")  # Para depuración
+
+    try:
+        response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+
+        # Extraer campos relevantes de la respuesta JSON
+        fmin = data.get('min_freq', 0)
+        fmax = data['max_freq']
+        factor = data['factor']
+        raw = data['data']
+
+        # Decodificar los datos en bruto usando el formato especificado
+        sp = decode_format[FORMAT](raw)
+
+        # Aplicar el factor numérico a los datos
+        sp *= factor
+
+        # Generar el eje de frecuencia
+        freq = pylab.linspace(fmin, fmax, len(sp))
+
+        # Graficar el espectro
+        pylab.figure()
+        pylab.title(f"Forma de Espectro - Máquina: {machine}, Punto: {point}, Modo: {pmode}")
+        pylab.xlabel("Frecuencia (Hz)")
+        pylab.ylabel("Amplitud")
+        pylab.plot(freq, sp)
+        pylab.grid(True)
+        pylab.show()
+
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error al comunicarse con la API: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
 
@@ -243,10 +293,18 @@ def main():
     plot_wave_parser.add_argument("--datetime","-t", required=True, help="Fecha de la forma de onda (timestamp)")
     plot_wave_parser.set_defaults(func=plot_wave)
 
+    # Subcomando plot-spectrum
+    plot_spectrum_parser = subparsers.add_parser("plot-spectrum", help="Representa un espectro específico")
+    plot_spectrum_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
+    plot_spectrum_parser.add_argument("--point","-p", required=True, help="Punto de medición")
+    plot_spectrum_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
+    plot_spectrum_parser.add_argument("--datetime","-t", required=True, help="Fecha del espectro (timestamp)")
+    plot_spectrum_parser.set_defaults(func=plot_spectrum)
+
     # Parsear argumentos
     args = parser.parse_args()
     if args.command:
-        if args.command in ["get-wave", "get-spectrum", "plot-wave"]:
+        if args.command in ["get-wave", "get-spectrum", "plot-wave", "plot-spectrum"]:
             args.func(args.machine, args.point, args.pmode, args.datetime)
         else:
             args.func(args.machine, args.point, args.pmode)
