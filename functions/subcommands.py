@@ -1,24 +1,26 @@
-import os
-import argparse
-import requests
+
+
 import json
-from dotenv import load_dotenv
-from datetime import UTC, datetime
-from matplotlib import pylab
-import numpy as np
+import os
 from base64 import b64decode
+from datetime import UTC, datetime
 from struct import unpack
 from zlib import decompress
 
+import numpy as np
+import requests
+from dotenv import load_dotenv
+from matplotlib import pylab
+from t8_client.functions.timestamp import utc_to_timestamp
 
 # Cargar variables de entorno
 load_dotenv()
 
 # Definir variables de conexión
-HOST = os.getenv('T8_HOST')
-USER = os.getenv('T8_USER')
-PASSWORD = os.getenv('T8_PASSWORD')
-FORMAT = 'zint'
+HOST = os.getenv("T8_HOST")
+USER = os.getenv("T8_USER")
+PASSWORD = os.getenv("T8_PASSWORD")
+FORMAT = "zint"
 
 # Función para decodificar datos comprimidos en formato zint
 def zint_to_float(raw_):
@@ -44,7 +46,6 @@ decode_format = {
 def list_waves(machine, point, pmode):
     """ Lista las formas de onda disponibles y muestra los valores de 'snap'. """
     url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -79,7 +80,6 @@ def list_waves(machine, point, pmode):
 def list_spectra(machine, point, pmode):
     """ Lista los espectros disponibles y muestra los valores de 'snap'. """
     url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -113,17 +113,10 @@ def list_spectra(machine, point, pmode):
 
 def get_wave(machine, point, pmode, date):
     """ Obtiene una forma de onda específica dado un timestamp. """
-    try:
-        # Convertir la fecha UTC en formato ISO 8601 a timestamp
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
-        date = str(int(date.timestamp()))
-
-    except ValueError as e:
-        print(f"Error al convertir la fecha: {e}")
-        return
+    
+    date=utc_to_timestamp(date)
 
     url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -138,17 +131,10 @@ def get_wave(machine, point, pmode, date):
 
 def get_spectrum(machine, point, pmode, date):
     """ Obtiene un espectro específico dado un timestamp. """
-    try:
-        # Convertir la fecha UTC en formato ISO 8601 a timestamp
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
-        date = str(int(date.timestamp()))
-
-    except ValueError as e:
-        print(f"Error al convertir la fecha: {e}")
-        return
+    
+    date=utc_to_timestamp(date)
 
     url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -163,17 +149,10 @@ def get_spectrum(machine, point, pmode, date):
 
 def plot_wave(machine, point, pmode, date):
     """ Representa una forma de onda específica dado un timestamp. """
-    try:
-        # Convertir la fecha UTC en formato ISO 8601 a timestamp
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
-        date = str(int(date.timestamp()))
-
-    except ValueError as e:
-        print(f"Error al convertir la fecha: {e}")
-        return
+    
+    date=utc_to_timestamp(date)
 
     url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -210,17 +189,10 @@ def plot_wave(machine, point, pmode, date):
 
 def plot_spectrum(machine, point, pmode, date):
     """ Representa una forma de espectro específica dado un timestamp. """
-    try:
-        # Convertir la fecha UTC en formato ISO 8601 a timestamp
-        date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=UTC)
-        date = str(int(date.timestamp()))
-
-    except ValueError as e:
-        print(f"Error al convertir la fecha: {e}")
-        return
+    
+    date=utc_to_timestamp(date)
 
     url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"f"?array_fmt={FORMAT}"
-    print(f"Solicitando datos desde: {url}")  # Para depuración
 
     try:
         response = requests.get(url, auth=(USER, PASSWORD), timeout=10)
@@ -255,61 +227,3 @@ def plot_spectrum(machine, point, pmode, date):
 
     except requests.exceptions.RequestException as e:
         print(f"Error al comunicarse con la API: {e}")
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Cliente T8 para gestionar datos de espectro y ondas")
-
-    # Subcomandos
-    subparsers = parser.add_subparsers(dest="command", help="Subcomandos disponibles")
-
-    # Subcomando list-waves
-    waves_parser = subparsers.add_parser("list-waves", help="Lista las formas de onda")
-    waves_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    waves_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    waves_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    waves_parser.set_defaults(func=list_waves)
-
-    # Subcomando list-spectra
-    spectra_parser = subparsers.add_parser("list-spectra", help="Lista los espectros")
-    spectra_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    spectra_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    spectra_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    spectra_parser.set_defaults(func=list_spectra)
-
-    # Subcomando get-spectrum
-    spectrum_parser = subparsers.add_parser("get-spectrum", help="Obtiene un espectro específico")
-    spectrum_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    spectrum_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    spectrum_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    spectrum_parser.add_argument("--datetime","-t", required=True, help="Fecha del espectro (timestamp)")
-    spectrum_parser.set_defaults(func=get_spectrum)
-
-    # Subcomando plot-wave
-    plot_wave_parser = subparsers.add_parser("plot-wave", help="Representa una forma de onda específica")
-    plot_wave_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    plot_wave_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    plot_wave_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    plot_wave_parser.add_argument("--datetime","-t", required=True, help="Fecha de la forma de onda (timestamp)")
-    plot_wave_parser.set_defaults(func=plot_wave)
-
-    # Subcomando plot-spectrum
-    plot_spectrum_parser = subparsers.add_parser("plot-spectrum", help="Representa un espectro específico")
-    plot_spectrum_parser.add_argument("--machine","-M", required=True, help="Identificador de la máquina")
-    plot_spectrum_parser.add_argument("--point","-p", required=True, help="Punto de medición")
-    plot_spectrum_parser.add_argument("--pmode","-m", required=True, help="Modo de procesamiento")
-    plot_spectrum_parser.add_argument("--datetime","-t", required=True, help="Fecha del espectro (timestamp)")
-    plot_spectrum_parser.set_defaults(func=plot_spectrum)
-
-    # Parsear argumentos
-    args = parser.parse_args()
-    if args.command:
-        if args.command in ["get-wave", "get-spectrum", "plot-wave", "plot-spectrum"]:
-            args.func(args.machine, args.point, args.pmode, args.datetime)
-        else:
-            args.func(args.machine, args.point, args.pmode)
-    else:
-        parser.print_help()
-
-if __name__ == "__main__":
-    main()
