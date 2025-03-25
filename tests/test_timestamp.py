@@ -1,4 +1,19 @@
+"""
+This module contains automated tests for the `utc_to_timestamp` function from the
+`timestamp.py` module.
 
+The tests verify that the function correctly converts UTC-formatted dates to timestamps
+and properly handles error cases, such as invalid formats or incorrect data types.
+
+Included tests:
+- `test_valid_date`: Verifies that a valid UTC date is correctly converted to a
+    timestamp.
+- `test_another_valid_date`: Verifies another valid UTC date.
+- `test_invalid_format`: Ensures that a `ValueError` is raised for invalid date formats.
+- `test_empty_string`: Verifies that an empty string raises a `ValueError`.
+- `test_non_string_input`: Ensures that a `TypeError` is raised if the input is not a
+    string.
+"""
 from src.t8_client.functions.timestamp import utc_to_timestamp
 
 # Constants for expected values

@@ -1,4 +1,20 @@
+"""
+This module provides a function to convert dates in UTC format to timestamps.
 
+The `utc_to_timestamp` function takes a date in UTC format (`YYYY-MM-DDTHH:MM:SS`)
+and converts it to a timestamp.
+
+Main functions:
+- `utc_to_timestamp`: Converts a date in UTC format to a timestamp.
+
+Usage:
+- This function is useful for preparing dates in queries to servers that
+    require timestamps.
+
+Exceptions:
+- Raises a `ValueError` if the date is not in the correct format.
+- Raises a `TypeError` if the provided argument is not a string.
+"""
 from datetime import datetime, timezone
 
 

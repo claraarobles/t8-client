@@ -1,4 +1,26 @@
+"""
+This module contains the implementations of the subcommands used by the
+T8 client.
 
+It provides functions to interact with a remote server, list available data,
+retrieve specific data (waves and spectra), and plot or save this data to
+CSV files.
+
+Main functions:
+- `list_waves`: Lists available waves and displays their timestamps.
+- `list_spectra`: Lists available spectra and displays their timestamps.
+- `get_wave`: Downloads a specific wave, decodes it, and saves it to a CSV file.
+- `get_spectrum`: Downloads a specific spectrum, decodes it, and saves it to a
+    CSV file.
+- `plot_wave`: Downloads and plots a specific wave.
+- `plot_spectrum`: Downloads and plots a specific spectrum.
+
+Dependencies:
+- This module uses environment variables (`T8_HOST`, `T8_USER`, `T8_PASSWORD`)
+    to connect to the server.
+- Requires the `save_to_csv` and `utc_to_timestamp` functions from other
+    project modules.
+"""
 import os
 from base64 import b64decode
 from datetime import UTC, datetime

@@ -1,4 +1,10 @@
+"""
+This module defines the command-line interface for the T8 client.
 
+It provides subcommands to list, retrieve, and plot data for spectra and waves.
+Each subcommand is dynamically configured and executes specific functions
+based on the arguments provided by the user.
+"""
 import argparse
 from argparse import _SubParsersAction
 from typing import Callable
