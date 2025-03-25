@@ -14,7 +14,8 @@ EXPECTED_TIMESTAMP_2000_01_01 = 946684800
 
 def test_another_valid_date() -> None:
     """Test with another valid UTC date."""
-    # Verify that the function correctly converts another valid UTC date string to a timestamp
+    # Verify that the function correctly converts another valid UTC date string
+    # to a timestamp
     assert utc_to_timestamp("2000-01-01T00:00:00") == EXPECTED_TIMESTAMP_2000_01_01
 
 def test_invalid_format() -> None:
