@@ -49,3 +49,14 @@ Proporciona la función `utc_to_timestamp()`, que convierte fechas en formato UT
 Por ejemplo:
 - Entrada: `"2023-01-01T12:00:00"`
 - Salida: `1672574400` (timestamp en segundos)
+
+### 5. `test_timestamp.py`
+
+Este script contiene pruebas automatizadas para la función `utc_to_timestamp()` del módulo `timestamp.py`. 
+
+- **Fechas válidas**: Verifica que las fechas UTC se conviertan correctamente a timestamps.
+  - Ejemplo: `"2023-03-15T12:30:45"` → `1678883445`
+- **Formato inválido**: Asegura que se lance un `ValueError` para formatos incorrectos.
+  - Ejemplo: `"2023/03/15 12:30:45"`
+- **Entrada vacía**: Verifica que una cadena vacía genere un `ValueError`.
+- **Tipo de dato incorrecto**: Asegura que se lance un `TypeError` si la entrada no es una cadena.
