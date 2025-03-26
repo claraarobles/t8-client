@@ -24,7 +24,7 @@ Este script es el punto de entrada del cliente. Define la interfaz de línea de 
 Cada subcomando requiere parámetros como el identificador de la máquina, el punto de medición, el modo de procesamiento y, en algunos casos, un timestamp. Por ejemplo:
 
 ```bash
-t8-client get-wave -M LP_Turbine -MAD31CY005 A -m AM1 -t "2019-04-11T18:25:54"
+t8-client get-wave -M LP_Turbine -p MAD31CY005 -m AM1 -t "2019-04-11T18:25:54"
 ```
 
 ### 2. `save_to_csv.py`

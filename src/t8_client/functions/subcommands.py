@@ -78,7 +78,7 @@ def list_waves(machine: str, point: str, pmode: str) -> None:
         point (str): Measurement point identifier.
         pmode (str): Mode of operation.
     """
-    url = f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
+    url = f"{HOST}/rest/waves/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
 
     try:
         # Send a GET request to the API
@@ -125,7 +125,7 @@ def list_spectra(machine: str, point: str, pmode: str) -> None:
         point (str): Measurement point identifier.
         pmode (str): Mode of operation.
     """
-    url = f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
+    url = f"{HOST}/rest/spectra/{machine}/{point}/{pmode}/?array_fmt={FORMAT}"
 
     try:
         # Send a GET request to the API
@@ -177,7 +177,7 @@ def get_wave(machine: str, point: str, pmode: str, date: str) -> None:
     date = utc_to_timestamp(date)
 
     url = (
-        f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/?array_fmt={FORMAT}"
+        f"{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/?array_fmt={FORMAT}"
     )
 
     try:
@@ -225,7 +225,7 @@ def get_spectrum(machine: str, point: str, pmode: str, date: str) -> None:
     date = utc_to_timestamp(date)
 
     url = (
-        f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"
+        f"{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"
         f"?array_fmt={FORMAT}"
     )
 
@@ -275,7 +275,7 @@ def plot_wave(machine: str, point: str, pmode: str, date: str) -> None:
     date = utc_to_timestamp(date)
 
     url = (
-        f"http://{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/?array_fmt={FORMAT}"
+        f"{HOST}/rest/waves/{machine}/{point}/{pmode}/{date}/?array_fmt={FORMAT}"
     )
 
     try:
@@ -328,7 +328,7 @@ def plot_spectrum(machine: str, point: str, pmode: str, date: str) -> None:
     date = utc_to_timestamp(date)
 
     url = (
-        f"http://{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"
+        f"{HOST}/rest/spectra/{machine}/{point}/{pmode}/{date}/"
         f"?array_fmt={FORMAT}"
     )
 
